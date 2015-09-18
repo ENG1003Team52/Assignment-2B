@@ -5,4 +5,7 @@ Gets it done
 Great at cooking pancakes
 
 Aidan Rowley
+<<<<<<< HEAD
 Bihai Sun
+=======
+>>>>>>> master
