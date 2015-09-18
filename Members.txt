@@ -1,9 +1,9 @@
-LIST OF MEMBERS FOR TEAM 52
- 
-Aidan Rowley
- 
-Josh Sim
- 
-Matt Watkins
+@@ -2,4 +2,6 @@ Joshua Sim
 
-Bihai Sun 
+Realest machine about
+Gets it done
+Great at cooking pancakes 
+Great at cooking pancakes
+
+Aidan Rowley
+Bihai Sun
