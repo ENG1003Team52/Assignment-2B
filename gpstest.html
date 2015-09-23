@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>GPS Test Page</title>
+    <style>
+        #outputArea {
+            padding: .25em;
+            border: solid black 2px;
+            margin: 3em;
+            height: 20em;
+            width: 20em;
+            overflow-y: scroll;
+            font-family: arial "sans serif";
+            font-size: 1em;
+            color: rgb(50, 50, 250);
+            background-color: rgb(225, 225, 225);
+        }
+        
+        #map {
+            height: 772px;
+        }
+    </style>
+
+</head>
+
+<body>
+    <!-- 	-->
+    <link rel="stylesheet" href="https://storage.googleapis.com/code.getmdl.io/1.0.4/material.indigo-pink.min.css">
+    <script src="https://storage.googleapis.com/code.getmdl.io/1.0.4/material.min.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+
+    <div class="mdl-layout mdl-js-layout mdl-layout--fixed-drawer
+            mdl-layout--fixed-header">
+        <header class="mdl-layout__header">
+            <div class="mdl-layout__header-row">
+                <div class="mdl-layout-spacer">GPS Test</div>
+                <div class="mdl-textfield mdl-js-textfield mdl-textfield--expandable
+                  mdl-textfield--floating-label mdl-textfield--align-right">
+                    <label class="mdl-button mdl-js-button mdl-button--icon" for="fixed-header-drawer-exp">
+                        <i class="material-icons">search</i>
+                    </label>
+                    <div class="mdl-textfield__expandable-holder">
+                        <input class="mdl-textfield__input" type="text" name="sample" id="fixed-header-drawer-exp" />
+                    </div>
+                </div>
+            </div>
+        </header>
+        <div class="mdl-layout__drawer">
+            <span class="mdl-layout-title">GPS Test</span>
+            <nav class="mdl-navigation">
+                <a class="mdl-navigation__link" href="login.html">login, which I haven't written</a>
+                <a class="mdl-navigation__link" href="gpstest.html">gpstest</a>
+            </nav>
+        </div>
+        <main class="mdl-layout__content">
+            <div class="page-content">
+                <!--------------Start----------->
+                <div id="map"></div>
+                <script type="text/javascript">
+                    //current locations to be used throughout the code
+                    var currientLat = 0
+                    var currientLng = 0
+                    var currientPosi
+                        //GPS Part
+                    positionOptions = { //Opinions for getting GPS data
+                        enableHighAccuracy: true,
+                        timeout: Infinity,
+                        maximumAge: 0
+                    };
+
+                    navigator.geolocation.watchPosition(loadCurrentLocation, errorHandler, positionOptions); //Event lister: GPS
+                    function errorHandler(error) { //Handle GPS Error
+                        if (error.code == 0) {
+                            alert("Unknown error");
+                        }
+                        if (error.code == 1) {
+                            alert("Access denied by user");
+                        }
+
+                        if (error.code == 2) {
+                            alert("Position unavailable");
+                        }
+
+                        if (error.code == 3) {
+                            alert("Timed out");
+                        }
+                    }
+
+                    function loadCurrentLocation(position) { //Get GPS value
+                        // Demonstrate the current latitude and longitude:
+                        currientLat = Number(position.coords.latitude).toFixed(4);
+                        currientLng = Number(position.coords.longitude).toFixed(4);
+                        currientPosi = new google.maps.LatLng(currientLat, currientLng)
+                        console.log(currientLat + "//" + currientLng + "//" + currientPosi)
+                    }
+
+                    //MAP Part
+                    var map;
+
+                    function initMap() {
+                        var map = new google.maps.Map(document.getElementById('map'), {
+                            center: {
+                                lat: currientLat,
+                                lng: currientLng,
+                            },
+                            zoom: 17
+                        });
+                        //update the map each 10 sec, change centre and pin
+                        setInterval(function () {
+                            map.panTo(currientPosi)
+                            new google.maps.Marker({
+                                position: currientPosi,
+                                map: map,
+                            });
+                            console.log("Pinned")
+                        }, 10 * 1000);
+                    }
+                </script>
+                <script async defer src="https://maps.googleapis.com/maps/api/js?v=3&amp;key=&amp;callback=initMap">
+                    //Load map Component from maps.google.com
+                </script>
+                <!--------------End----------->
+            </div>
+        </main>
+    </div>
+
+</body>
+
+</html>
