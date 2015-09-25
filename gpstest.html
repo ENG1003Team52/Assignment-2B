@@ -107,7 +107,9 @@
                             },
                             zoom: 17
                         });
-                        //update the map each 10 sec, change centre and pin
+                        //update the map , change centre 
+                        
+                        //pin every sec
                         setInterval(function () {
                             map.panTo(currientPosi)
                             new google.maps.Marker({
@@ -115,7 +117,7 @@
                                 map: map,
                             });
                             console.log("Pinned")
-                        }, 10 * 1000);
+                        }, 1000);
                     }
                 </script>
                 <script async defer src="https://maps.googleapis.com/maps/api/js?v=3&amp;key=&amp;callback=initMap">
