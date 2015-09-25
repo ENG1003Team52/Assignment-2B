@@ -60,10 +60,12 @@
                 <div id="map"></div>
                 <script type="text/javascript">
                     //current locations to be used throughout the code
-                    var currientLat = 0
-                    var currientLng = 0
-                    var currientPosi
-                        //GPS Part
+                    var currentLat = 0 //initial latitude usd to setup the map
+                    var currentLng = 0 //initial langnitude usd to setup the map
+                    var currentPosi = [] //Array with location history, newest is the first.
+
+
+                    //GPS Part
                     positionOptions = { //Opinions for getting GPS data
                         enableHighAccuracy: true,
                         timeout: Infinity,
@@ -90,10 +92,14 @@
 
                     function loadCurrentLocation(position) { //Get GPS value
                         // Demonstrate the current latitude and longitude:
-                        currientLat = Number(position.coords.latitude).toFixed(4);
-                        currientLng = Number(position.coords.longitude).toFixed(4);
-                        currientPosi = new google.maps.LatLng(currientLat, currientLng)
-                        console.log(currientLat + "//" + currientLng + "//" + currientPosi)
+                        currentLat = Number(position.coords.latitude);
+                        currentLng = Number(position.coords.longitude);
+                        tempPosi = {
+                            lat: currentLat,
+                            lng: currentLng,
+                        }
+                        currentPosi.push(tempPosi); //Add new locations to location histroy
+                        console.log(currentLat + "//" + currentLng + "//" + currentPosi)
                     }
 
                     //MAP Part
@@ -102,21 +108,35 @@
                     function initMap() {
                         var map = new google.maps.Map(document.getElementById('map'), {
                             center: {
-                                lat: currientLat,
-                                lng: currientLng,
+                                lat: currentLat,
+                                lng: currentLng,
                             },
                             zoom: 17
                         });
-                        //update the map , change centre 
-                        
-                        //pin every sec
+                        //update the map , change centre and pin every sec
                         setInterval(function () {
-                            map.panTo(currientPosi)
+                            //Move the map
+                            map.panTo(currentPosi[currentPosi.length-1])
+
+                            //Pin the map
                             new google.maps.Marker({
-                                position: currientPosi,
+                                position: currentPosi[currentPosi.length-1],
                                 map: map,
                             });
+
                             console.log("Pinned")
+
+                            //Draw lines
+                            var polylines = new google.maps.Polyline({
+                                path: currentPosi,
+                                geodesic: true,
+                                strokeColor: '#FF0000',
+                                strokeOpacity: 1.0,
+                                strokeWeight: 2
+                            });
+
+                            polylines.setMap(map);
+
                         }, 1000);
                     }
                 </script>
