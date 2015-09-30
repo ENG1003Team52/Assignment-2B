@@ -5,21 +5,43 @@
     <meta charset="utf-8">
     <title>GPS Test Page</title>
     <style>
-        #outputArea {
-            padding: .25em;
-            border: solid black 2px;
-            margin: 3em;
-            height: 20em;
-            width: 20em;
-            overflow-y: scroll;
-            font-family: arial "sans serif";
-            font-size: 1em;
-            color: rgb(50, 50, 250);
-            background-color: rgb(225, 225, 225);
+        #map {
+            height: 770px;
+            width: : 250px;
         }
         
-        #map {
-            height: 772px;
+        #runButton {
+            width: 180px;
+            height: 90px;
+            font-size: 20px;
+            color: #fff;
+            background-color: rgba(0, 0, 0, .3);
+            border: 1px solid rgba(0, 0, 0, .8);
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        
+        #saveButton {
+            width: 180px;
+            height: 90px;
+            font-size: 20px;
+            color: #fff;
+            background-color: rgba(0, 0, 0, .3);
+            border: 1px solid rgba(0, 0, 0, .8);
+            border-radius: 20px;
+            font-weight: bold;
+            float: right
+        }
+        
+        #speedDisplay {
+            font-size: 50px;
+            margin: auto;
+            position: relative;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            float: none;
         }
     </style>
 
@@ -57,12 +79,17 @@
         <main class="mdl-layout__content">
             <div class="page-content">
                 <!--------------Start----------->
+                <div id="controlArea">
+                    <button id="runButton">Run!</button>
+                    <output id="speedDisplay"></output>
+                    <button id="saveButton">Save!</button>
+                </div>
                 <div id="map"></div>
+
                 <script type="text/javascript">
-                    //current locations to be used throughout the code
-                    var currentLat = 0 //initial latitude usd to setup the map
-                    var currentLng = 0 //initial langnitude usd to setup the map
-                    var currentPosi = [] //Array with location history, newest is the first.
+                    //locations to be used throughout the code
+                    var listOfPosi = [];
+                    var timerID
 
 
                     //GPS Part
@@ -89,55 +116,177 @@
                             alert("Timed out");
                         }
                     }
-
-                    function loadCurrentLocation(position) { //Get GPS value
+                    //Get GPS value and time and save it
+                    function loadCurrentLocation(position) {
                         // Demonstrate the current latitude and longitude:
-                        currentLat = Number(position.coords.latitude);
-                        currentLng = Number(position.coords.longitude);
-                        tempPosi = {
+                        var currentLat = Number(position.coords.latitude);
+                        var currentLng = Number(position.coords.longitude);
+                        //Convert the positions to object for the map to recognise
+                        var currentPosi = {
                             lat: currentLat,
                             lng: currentLng,
                         }
-                        currentPosi.push(tempPosi); //Add new locations to location histroy
-                        console.log(currentLat + "//" + currentLng + "//" + currentPosi)
+
+                        //Add new locations to location histroy
+                        listOfPosi.push(currentPosi);
                     }
 
                     //MAP Part
                     var map;
 
                     function initMap() {
+                        //initialse map
+                        var mapZoomed = false //to make sure the map only zooms in once
+                        var isRunning = false //to indicate if is running. If not, a run button will appear to start running, if is running, a button will appear to clear current run without saving, and start a new run.
                         var map = new google.maps.Map(document.getElementById('map'), {
                             center: {
-                                lat: currentLat,
-                                lng: currentLng,
+                                lat: 0,
+                                lng: 126,
                             },
-                            zoom: 17
+                            zoom: 2
                         });
-                        //update the map , change centre and pin every sec
+
+                        //update the map , change centre every sec
                         setInterval(function () {
-                            //Move the map
-                            map.panTo(currentPosi[currentPosi.length-1])
-
-                            //Pin the map
-                            new google.maps.Marker({
-                                position: currentPosi[currentPosi.length-1],
-                                map: map,
-                            });
-
-                            console.log("Pinned")
-
-                            //Draw lines
-                            var polylines = new google.maps.Polyline({
-                                path: currentPosi,
-                                geodesic: true,
-                                strokeColor: '#FF0000',
-                                strokeOpacity: 1.0,
-                                strokeWeight: 2
-                            });
-
-                            polylines.setMap(map);
+                            //Zoom in the map once the software finds where is the user.
+                            if (typeof (listOfPosi[listOfPosi.length - 1] === Object)) {
+                                if (mapZoomed === false) {
+                                    map.setZoom(19);
+                                    mapZoomed = true
+                                }
+                                //Move the map to curent position, haven't started the run
+                                map.panTo(listOfPosi[listOfPosi.length - 1])
+                                console.log("Moved")
+                            }
 
                         }, 1000);
+
+                        //code about running process
+                        var markers = []; //space to place all the markers
+                        var polyline;
+                        var runButton = document.getElementById("runButton")
+                            //When the run button is clicked do the following things
+                        runButton.onclick = function () {
+                            if (isRunning === false) {
+                                //all a new rundata object,we will save it later for local storage of the whole run
+                                run1 = new RunData()
+                                //Set start time
+                                run1.startTime.date = new Date().toTimeString();
+                                    run1.startTime.time = new Date().toDateString();
+                                    console.log(run1.startTime.date)
+                                console.log(run1.startTime.time)
+                                
+                                //set a polyline
+                                polyline = new google.maps.Polyline({
+                                    path: run1.points,
+                                    geodesic: true,
+                                    strokeColor: '#FF0000',
+                                    strokeOpacity: 1.0,
+                                    strokeWeight: 2,
+                                    map: map
+                                });
+                                //timerID is used to stop the timer, i.e. stop recoding
+                                timerID = setInterval(function () { //Do things every second
+                                        //copy from list of positions to this run
+                                        //new position and time of the new point
+                                        var time;
+                                        var point = {
+                                            lat: null,
+                                            lng: null,
+                                            time: null
+                                        }
+
+
+                                        point.lat = listOfPosi[listOfPosi.length - 1].lat;
+                                        point.lng = listOfPosi[listOfPosi.length - 1].lng
+                                        point.time = new Date().getTime()
+
+                                        run1.points.push(point)
+                                        console.log(run1.points)
+
+                                        //Pin the map
+                                        var marker = new google.maps.Marker({
+                                            position: run1.points[run1.points.length - 1],
+                                            map: map
+                                        });
+                                        markers.push(marker);
+                                        console.log(markers);
+                                        console.log("Pinned");
+
+                                        //update polyline
+                                        polyline.setPath(run1.points)
+
+                                        //Display speed
+                                        dispSpeed();
+                                    },
+                                    1000);
+                                isRunning = true;
+                                runButton.innerHTML = ("Discard this run")
+                            } else if (isRunning === true) { //Press button clear current run
+                                var ifContinue = confirm("Unsaved data will be lost, continue?") //Let user to confirm it
+                                if (ifContinue === true) {
+                                    clearInterval(timerID); //Stop timer, i.e. stop copying data
+                                    clearMap(markers, polyline); //Clear all the markers on the map
+                                    markers = []; //delete all the markers
+                                    polyline = null;//delete polyline
+                                    run1 = null; //delete the current run1
+                                    document.getElementById("speedDisplay").innerHTML = null;
+                                    isRunning = false; //make sure when click button again, it creat the run
+                                    runButton.innerHTML = ("run!") //change what does the button says.
+                                }
+                            }
+                        }
+                    }
+                    // function used to remove all the markers on the map by setting all the "map" property of the markers to null
+                    function clearMap(markers, polyline) {
+                        for (var i = 0; i < markers.length; i++) { //literation for all the markers in the array
+                            markers[i].setMap(null); //set the map property of markers to null
+                        }
+                        polyline.setMap(null);
+                    }
+
+                    //constructor of rundata
+                    function RunData() {
+                        self = this
+                        this.points = [];
+                        this.startTime = {
+                            time: 0,
+                            date: 0,
+                        };
+                        this.endTime = {
+                            time: 0,
+                            date: 0,
+                        }
+                    };
+                    //Function to display speed, called in the run function
+                    function dispSpeed() {
+                        var speedDisp = document.getElementById("speedDisplay");
+                        var distance = distanceBetweenPoints(run1.points[run1.points.length - 1], run1.points[run1.points.length - 2]); // distance between two points, in metres
+                        var time = (run1.points[run1.points.length - 1].time - run1.points[run1.points.length - 2].time) / 1000; //time between points, in seconds
+                        console.log(run1.points[run1.points.length - 1].time)
+                        console.log(distance)
+
+                        var speed = distance / time;
+                        var outString = "Speed:" + speed.toFixed(2) + "m/s"
+                        speedDisp.innerHTML = outString;
+
+                        function distanceBetweenPoints(pointA, pointB) { //Calculate the distance between two points given the coordinate
+                            var latA = pointA.lat * Math.PI / 180;
+                            var latB = pointB.lat * Math.PI / 180;
+                            var lngA = pointA.lng * Math.PI / 180;
+                            var lngB = pointB.lng * Math.PI / 180;
+
+                            var h = Math.pow(Math.sin(0.5 * (latB - latA)), 2) + Math.cos(latA) * Math.cos(latB) * Math.pow(Math.sin(0.5 * (lngB - lngA)), 2); //The haversine formula
+                            var d = 2 * 6.37e6 * Math.asin(Math.sqrt(h)); //The haversine formula
+                            return d;
+                        }
+                    }
+
+
+                    //Store current run to localstorage
+                    saveButton.onclick = function () {
+                        clearInterval(timerID)
+
                     }
                 </script>
                 <script async defer src="https://maps.googleapis.com/maps/api/js?v=3&amp;key=&amp;callback=initMap">
