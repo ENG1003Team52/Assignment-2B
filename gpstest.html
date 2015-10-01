@@ -89,7 +89,8 @@
                 <script type="text/javascript">
                     //locations to be used throughout the code
                     var listOfPosi = [];
-                    var timerID
+                    var timerID //Used to stop the timer
+                    var isRunning = false //to indicate if is running. If not, a run button will appear to start running, if is running, a button will appear to clear current run without saving, and start a new run.
 
 
                     //GPS Part
@@ -137,7 +138,6 @@
                     function initMap() {
                         //initialse map
                         var mapZoomed = false //to make sure the map only zooms in once
-                        var isRunning = false //to indicate if is running. If not, a run button will appear to start running, if is running, a button will appear to clear current run without saving, and start a new run.
                         var map = new google.maps.Map(document.getElementById('map'), {
                             center: {
                                 lat: 0,
@@ -161,23 +161,38 @@
 
                         }, 1000);
 
-                        //code about running process
-                        var markers = []; //space to place all the markers
-                        var polyline;
-                        var runButton = document.getElementById("runButton")
-                            //When the run button is clicked do the following things
+
+
+
+                        //constructor of rundata
+                        function RunData() {
+                            self = this
+                            this.name = "";
+                            this.points = [];
+                            this.startTime = {
+                                time: 0,
+                                date: 0,
+                            };
+                            this.endTime = {
+                                time: 0,
+                                date: 0,
+                            }
+                            this.markers = [];
+                            this.polyline;
+                        };
+                        //When the run button is clicked do the following things
                         runButton.onclick = function () {
                             if (isRunning === false) {
                                 //all a new rundata object,we will save it later for local storage of the whole run
                                 run1 = new RunData()
-                                //Set start time
+                                    //Set start time
                                 run1.startTime.date = new Date().toTimeString();
-                                    run1.startTime.time = new Date().toDateString();
-                                    console.log(run1.startTime.date)
+                                run1.startTime.time = new Date().toDateString();
+                                console.log(run1.startTime.date)
                                 console.log(run1.startTime.time)
-                                
+
                                 //set a polyline
-                                polyline = new google.maps.Polyline({
+                                run1.polyline = new google.maps.Polyline({
                                     path: run1.points,
                                     geodesic: true,
                                     strokeColor: '#FF0000',
@@ -209,15 +224,17 @@
                                             position: run1.points[run1.points.length - 1],
                                             map: map
                                         });
-                                        markers.push(marker);
-                                        console.log(markers);
+                                        run1.markers.push(marker);
+                                        console.log(run1.markers);
                                         console.log("Pinned");
 
                                         //update polyline
-                                        polyline.setPath(run1.points)
+                                        run1.polyline.setPath(run1.points)
 
-                                        //Display speed
-                                        dispSpeed();
+                                        //If there are at least 2 points, display speed
+                                        if (run1.points.length >= 2) {
+                                            dispSpeed();
+                                        }
                                     },
                                     1000);
                                 isRunning = true;
@@ -225,39 +242,26 @@
                             } else if (isRunning === true) { //Press button clear current run
                                 var ifContinue = confirm("Unsaved data will be lost, continue?") //Let user to confirm it
                                 if (ifContinue === true) {
-                                    clearInterval(timerID); //Stop timer, i.e. stop copying data
-                                    clearMap(markers, polyline); //Clear all the markers on the map
-                                    markers = []; //delete all the markers
-                                    polyline = null;//delete polyline
-                                    run1 = null; //delete the current run1
-                                    document.getElementById("speedDisplay").innerHTML = null;
-                                    isRunning = false; //make sure when click button again, it creat the run
-                                    runButton.innerHTML = ("run!") //change what does the button says.
+                                    reinitialise()
+                                    run1 = null
                                 }
                             }
                         }
                     }
-                    // function used to remove all the markers on the map by setting all the "map" property of the markers to null
-                    function clearMap(markers, polyline) {
-                        for (var i = 0; i < markers.length; i++) { //literation for all the markers in the array
-                            markers[i].setMap(null); //set the map property of markers to null
+                    // function used to remove all the markers on the map empty the markers and polylines in currentrun
+                    function reinitialise() {
+                        clearInterval(timerID); //Stop timer, i.e. stop copying data
+                        for (var i = 0; i < run1.markers.length; i++) { //literation for all the markers in the array
+                            run1.markers[i].setMap(null); //set the map property of markers to null
                         }
-                        polyline.setMap(null);
+                        run1.polyline.setMap(null);
+                        delete run1.markers;
+                        delete run1.polyline;
+                        document.getElementById("speedDisplay").innerHTML = null;
+                        isRunning = false; //make sure when click button again, it creat the run
+                        document.getElementById("runButton").innerHTML = ("run!") //change what does the button says.
                     }
 
-                    //constructor of rundata
-                    function RunData() {
-                        self = this
-                        this.points = [];
-                        this.startTime = {
-                            time: 0,
-                            date: 0,
-                        };
-                        this.endTime = {
-                            time: 0,
-                            date: 0,
-                        }
-                    };
                     //Function to display speed, called in the run function
                     function dispSpeed() {
                         var speedDisp = document.getElementById("speedDisplay");
@@ -285,7 +289,35 @@
 
                     //Store current run to localstorage
                     saveButton.onclick = function () {
-                        clearInterval(timerID)
+                        var storageKey
+
+                        //if there's no current run, tell user to start a new run
+                        if (isRunning === false) {
+                            alert("There's no run to be saved. To start a new run, press 'run!' button on the left")
+                        } else if (isRunning === true) {
+                            clearInterval(timerID) //Stop recording
+
+                            //find a emply key value
+                            for (i = 1; i <= 100; i++) {
+                                storageKey = "run" + i;
+                                if (localStorage.getItem(storageKey) === null) {
+                                    console.log(storageKey);
+                                    break;
+                                }
+
+                            }
+                            //ask user for run's name for storage
+                            run1.name = prompt("What's the name of this run?", storageKey)
+
+                            reinitialise()
+
+                            //Storage the run to localstorage
+                            localStorage.setItem(storageKey, JSON.stringify(run1));
+                            alert("save successful!")
+
+                            //delete the current run
+                            run1 = null
+                        }
 
                     }
                 </script>
