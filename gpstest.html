@@ -186,8 +186,8 @@
                                 //all a new rundata object,we will save it later for local storage of the whole run
                                 run1 = new RunData()
                                     //Set start time
-                                run1.startTime.date = new Date().toTimeString();
-                                run1.startTime.time = new Date().toDateString();
+                                run1.startTime.date = new Date().toDateString();
+                                run1.startTime.time = new Date().toTimeString();
                                 console.log(run1.startTime.date)
                                 console.log(run1.startTime.time)
 
@@ -242,8 +242,10 @@
                             } else if (isRunning === true) { //Press button clear current run
                                 var ifContinue = confirm("Unsaved data will be lost, continue?") //Let user to confirm it
                                 if (ifContinue === true) {
+                                    //delete everything on the map
                                     reinitialise()
-                                    run1 = null
+                                        //delete the current run
+                                    delete run1
                                 }
                             }
                         }
@@ -295,6 +297,8 @@
                         if (isRunning === false) {
                             alert("There's no run to be saved. To start a new run, press 'run!' button on the left")
                         } else if (isRunning === true) {
+                            run1.endTime.date = new Date().toDateString();
+                            run1.endTime.time = new Date().toTimeString();
                             clearInterval(timerID) //Stop recording
 
                             //find a emply key value
@@ -306,8 +310,12 @@
                                 }
 
                             }
+
                             //ask user for run's name for storage
-                            run1.name = prompt("What's the name of this run?", storageKey)
+                            run1.name = prompt("What's the name of this run?", storageKey);
+                            if (run1.name = null) {
+                                run1.name = storageKey;
+                            }
 
                             reinitialise()
 
@@ -316,9 +324,8 @@
                             alert("save successful!")
 
                             //delete the current run
-                            run1 = null
+                            delete run1
                         }
-
                     }
                 </script>
                 <script async defer src="https://maps.googleapis.com/maps/api/js?v=3&amp;key=&amp;callback=initMap">
