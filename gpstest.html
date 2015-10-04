@@ -5,6 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1 user-scalable=no">
     <title>GPS Test Page</title>
+    <link rel="shortcut icon" sizes="196x196" href="images/running.png">
     <style>
         #map {
             height: 380px;
@@ -266,17 +267,17 @@
                                         if (run1.points.length >= 2) {
                                             dispSpeed();
                                             //Update the total distance
-                                            document.getElementById("totalDistance").innerHTML="total distance: <br>"+run1.totalDistance.toFixed(0)+"m";
-                                            var totalTime 
-                                            totalTime= new Date(run1.points[run1.points.length - 1].time-run1.points[1].time).toGMTString().substring(17,25);
-                                            document.getElementById("totalTime").innerHTML="total time: <br>"+totalTime;
-                                            var aveSpeed = (run1.totalDistance/((run1.points[run1.points.length - 1].time-run1.points[1].time)/1000)).toFixed(0)
-                                            document.getElementById("averageSpeed").innerHTML="Average Speed: <br>"+aveSpeed+"m/s";
-                                                
-                                             
+                                            document.getElementById("totalDistance").innerHTML = "total distance: <br>" + run1.totalDistance.toFixed(0) + "m";
+                                            var totalTime
+                                            totalTime = new Date(run1.points[run1.points.length - 1].time - run1.points[1].time).toGMTString().substring(17, 25);
+                                            document.getElementById("totalTime").innerHTML = "total time: <br>" + totalTime;
+                                            var aveSpeed = (run1.totalDistance / ((run1.points[run1.points.length - 1].time - run1.points[1].time) / 1000)).toFixed(0)
+                                            document.getElementById("averageSpeed").innerHTML = "Average Speed: <br>" + aveSpeed + "m/s";
+
+
                                         }
 
-                                        
+
                                     },
                                     1000);
                                 isRunning = true;
@@ -306,6 +307,10 @@
                         document.getElementById("speedDisplay").innerHTML = null;
                         isRunning = false; //make sure when click button again, it creat the run
                         document.getElementById("runButton").innerHTML = ("run!") //change what does the button says.
+                        document.getElementById("totalDistance").innerHTML = "";
+                        document.getElementById("totalTime").innerHTML = "";
+                        document.getElementById("averageSpeed").innerHTML ="";
+
                     }
 
                     //Function to display speed, called in the run function
