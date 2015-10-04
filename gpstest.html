@@ -3,16 +3,16 @@
 
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1 user-scalable=no">
     <title>GPS Test Page</title>
     <style>
         #map {
-            height: 770px;
-            width: : 250px;
+            height: 380px;
         }
         
         #runButton {
-            width: 180px;
-            height: 90px;
+            width: 40%;
+            height: 50px;
             font-size: 20px;
             color: #fff;
             background-color: rgba(0, 0, 0, .3);
@@ -22,8 +22,8 @@
         }
         
         #saveButton {
-            width: 180px;
-            height: 90px;
+            width: 40%;
+            height: 50px;
             font-size: 20px;
             color: #fff;
             background-color: rgba(0, 0, 0, .3);
@@ -34,14 +34,18 @@
         }
         
         #speedDisplay {
-            font-size: 50px;
-            margin: auto;
-            position: relative;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            left: 0;
-            float: none;
+            font-size: 30px;
+            height: 30px;
+            text-align: center;
+            margin-top: 8px;
+        }
+        
+        #totalDistance,
+        #totalTime,
+        #averageSpeed {
+            float: left;
+            width: 33%;
+            text-align: center;
         }
     </style>
 
@@ -80,12 +84,18 @@
         <main class="mdl-layout__content">
             <div class="page-content">
                 <!--------------Start----------->
+                <div id="speedDisplay"></div>
                 <div id="controlArea">
                     <button id="runButton">Run!</button>
-                    <output id="speedDisplay"></output>
                     <button id="saveButton">Save!</button>
                 </div>
                 <div id="map"></div>
+                <div id="dataOutput">
+                    <div id="totalDistance"></div>
+                    <div id="averageSpeed"></div>
+                    <div id="totalTime"></div>
+                </div>
+
 
                 <script type="text/javascript">
                     //locations to be used throughout the code
@@ -124,7 +134,7 @@
                         var currentLat = Number(position.coords.latitude);
                         var currentLng = Number(position.coords.longitude);
                         var currentAccuracy = Number(position.coords.accuracy);
-                            //Convert the positions to object for the map to recognise
+                        //Convert the positions to object for the map to recognise
                         var currentPosi = {
                             lat: currentLat,
                             lng: currentLng,
@@ -183,6 +193,7 @@
                             this.markers = [];
                             this.polyline;
                             this.circle;
+                            this.totalDistance = 0;
                         };
 
                         //When the run button is clicked do the following things
@@ -250,10 +261,22 @@
                                         //Update the circle
                                         run1.circle.setCenter(run1.points[run1.points.length - 1]);
                                         run1.circle.setRadius(run1.points[run1.points.length - 1].accuracy);
+
                                         //If there are at least 2 points, display speed
                                         if (run1.points.length >= 2) {
                                             dispSpeed();
+                                            //Update the total distance
+                                            document.getElementById("totalDistance").innerHTML="total distance: <br>"+run1.totalDistance.toFixed(0)+"m";
+                                            var totalTime 
+                                            totalTime= new Date(run1.points[run1.points.length - 1].time-run1.points[1].time).toGMTString().substring(17,25);
+                                            document.getElementById("totalTime").innerHTML="total time: <br>"+totalTime;
+                                            var aveSpeed = (run1.totalDistance/((run1.points[run1.points.length - 1].time-run1.points[1].time)/1000)).toFixed(0)
+                                            document.getElementById("averageSpeed").innerHTML="Average Speed: <br>"+aveSpeed+"m/s";
+                                                
+                                             
                                         }
+
+                                        
                                     },
                                     1000);
                                 isRunning = true;
@@ -289,6 +312,7 @@
                     function dispSpeed() {
                         var speedDisp = document.getElementById("speedDisplay");
                         var distance = distanceBetweenPoints(run1.points[run1.points.length - 1], run1.points[run1.points.length - 2]); // distance between two points, in metres
+                        run1.totalDistance += distance; //Add up distance for displaying in the end
                         var time = (run1.points[run1.points.length - 1].time - run1.points[run1.points.length - 2].time) / 1000; //time between points, in seconds
                         console.log(run1.points[run1.points.length - 1].time)
                         console.log(distance)
