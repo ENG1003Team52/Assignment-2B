@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Run History</title>
+    <style>
+        #share-buttons img {
+            width: 35px;
+            padding: 5px;
+            border: 0;
+            box-shadow: 0;
+            display: inline;
+        }
+        
+        #map {
+            height: 770px;
+            width: : 250px;
+        }
+        
+        #processRunAera,
+        #runSelectionArea,
+        #share-buttons {
+            text-align: center
+        }
+        
+        #goButton {
+            width: 180px;
+            height: 90px;
+            font-size: 20px;
+            color: #fff;
+            background-color: rgba(0, 0, 0, .3);
+            border: 1px solid rgba(0, 0, 0, .8);
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        
+        #deleteAllButton,
+        #deleteButton {
+            width: 180px;
+            height: 90px;
+            font-size: 20px;
+            color: #fff;
+            background-color: rgba(255, 0, 0, .3);
+            border: 1px solid rgba(255, 0, 0, .8);
+            border-radius: 20px;
+            font-weight: bold;
+        }
+    </style>
+
+</head>
+
+<body>
+    <!-- 	-->
+    <link rel="stylesheet" href="https://storage.googleapis.com/code.getmdl.io/1.0.4/material.indigo-pink.min.css">
+    <script src="https://storage.googleapis.com/code.getmdl.io/1.0.4/material.min.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+
+    <div class="mdl-layout mdl-js-layout mdl-layout--fixed-drawer
+            mdl-layout--fixed-header">
+        <header class="mdl-layout__header">
+            <div class="mdl-layout__header-row">
+                <div class="mdl-layout-spacer">GPS Test</div>
+                <div class="mdl-textfield mdl-js-textfield mdl-textfield--expandable
+                  mdl-textfield--floating-label mdl-textfield--align-right">
+                    <label class="mdl-button mdl-js-button mdl-button--icon" for="fixed-header-drawer-exp">
+                        <i class="material-icons">search</i>
+                    </label>
+                    <div class="mdl-textfield__expandable-holder">
+                        <input class="mdl-textfield__input" type="text" name="sample" id="fixed-header-drawer-exp" />
+                    </div>
+                </div>
+            </div>
+        </header>
+        <div class="mdl-layout__drawer">
+            <span class="mdl-layout-title">GPS Test</span>
+            <nav class="mdl-navigation">
+                <a class="mdl-navigation__link" href="login.html">login, which I haven't written</a>
+                <a class="mdl-navigation__link" href="gpstest.html">gpstest</a>
+                <a class="mdl-navigation__link" href="runHistory.html">run history</a>
+            </nav>
+        </div>
+        <main class="mdl-layout__content">
+            <div class="page-content">
+                <!--------------Start----------->
+                <div id="runSelectionArea">
+                    <select id="runSelection">
+                        <option value="selectARun">Please select a run to diaplay</option>
+                    </select>
+                    <button id="goButton">Go!</button>
+                </div>
+                <div id="map"></div>
+                <div id="processRunAera">
+                    <button id="deleteButton">Delete thi run!</button>
+                    <button id="deleteAllButton">Delete All runs!</button>
+                </div>
+
+                <script type="text/javascript">
+                    //Read stored runs from the local storage, and add options
+                    var runs = [];
+                    var targetSelection = document.getElementById("runSelection");
+                    var currentRun;
+                    var loadingOrder = 1; //To find which position should runs from localstorage to runs
+
+                    for (i = 1; i <= 100; i++) {
+                        if (localStorage.getItem("run" + i)) {
+                            runs[loadingOrder] = JSON.parse(localStorage.getItem("run" + i))
+                            var Option = document.createElement("OPTION");
+                            Option.value = i;
+                            Option.text = runs[loadingOrder].name + "-----Started at " + runs[loadingOrder].startTime.date + " " + runs[loadingOrder].startTime.time.substring(0, 8);
+                            targetSelection.options.add(Option);
+                            loadingOrder++;
+                        }
+                    }
+
+
+
+                    //MAP Part
+                    var map;
+
+                    function initMap() {
+                        //initialse map
+                        var map = new google.maps.Map(document.getElementById('map'), {
+                            center: {
+                                lat: 0,
+                                lng: 126,
+                            },
+                            zoom: 2
+                        });
+
+                        //when the go button is clicked...
+                        var goButton = document.getElementById('goButton')
+                        goButton.onclick = function () {
+                            if (targetSelection.selectedIndex !== 0) { //The 0th option is "Please select a run to diaplay" i.e. nothing.
+                                currentRun = runs[targetSelection.selectedIndex];
+                                //set empty boundries
+                                var bounds = new google.maps.LatLngBounds();
+
+                                //add polylines
+                                currentRun.polyline = new google.maps.Polyline({
+                                    path: currentRun.points,
+                                    geodesic: true,
+                                    strokeColor: '#FF0000',
+                                    strokeOpacity: 1.0,
+                                    strokeWeight: 2,
+                                    map: map
+                                });
+
+                                //add markers
+                                for (i = 0; i < currentRun.points.length; i++) {
+                                    //Pin the map
+                                    var marker = new google.maps.Marker({
+                                        position: currentRun.points[i],
+                                        map: map
+                                    });
+                                    currentRun.markers.push(marker);
+                                    //extend boundary to current marker
+                                    bounds.extend(new google.maps.LatLng(currentRun.points[i].lat, currentRun.points[i].lng)) //extend boundry to this point
+                                }
+
+                                //fit map with boundries
+                                map.fitBounds(bounds);
+                            } else {
+                                alert("You didn't choose any run!")
+                            }
+                        }
+
+                        //When delete button is clicked
+                        var deleteButton = document.getElementById('deleteButton')
+                        deleteButton.onclick = function () {
+                            confirm("The current run will be deleted, sure?");
+                            if (targetSelection.selectedIndex !== 0) {
+                                //Remove the item from localstorage
+                                localStorage.removeItem("run" + targetSelection.selectedIndex);
+
+                                //Remove the item from selection
+                                targetSelection.remove(targetSelection.selectedIndex);
+
+                                //Clear the map, set to origin
+                                reinitialise();
+
+                            } else {
+                                alert("You didn't choose any run!")
+                            }
+                        }
+
+                        //When delete all button is clicked
+                        var deleteAllButton = document.getElementById('deleteAllButton')
+                        deleteAllButton.onclick = function () {
+                            confirm("All the runs will be deleted, be sure!");
+                            for (i = 1; i <= 100; i++) {
+                                if (localStorage.getItem("run" + i)) {
+                                    //Remove the item from localstorage
+                                    localStorage.removeItem("run" + i);
+                                }
+                            }
+
+                            while(targetSelection.options.length>1){
+                                targetSelection.remove(1)
+                            }
+
+                            //Clear the map, set to origin
+                            reinitialise();
+
+                        }
+
+
+                        // function used to remove all the markers on the map empty the markers and polylines in currentrun
+                        function reinitialise() {
+                            for (var i = 0; i < currentRun.markers.length; i++) { //literation for all the markers in the array
+                                currentRun.markers[i].setMap(null); //set the map property of markers to null
+                            }
+                            currentRun.polyline.setMap(null);
+                            currentRun.markers = [];
+                            currentRun.polyline = null;
+                            map.panTo({
+                                lat: 0,
+                                lng: 126,
+                            });
+                            map.setZoom(2);
+                        }
+                    }
+                </script>
+                <script async defer src="https://maps.googleapis.com/maps/api/js?v=3&amp;key=&amp;callback=initMap">
+                    //Load map Component from maps.google.com
+                </script>
+
+                <div id="share-buttons">
+
+                    <!-- Buffer -->
+                    <a href="https://bufferapp.com/add?url=https://simplesharebuttons.com&amp;text=Simple Share Buttons" target="_blank">
+                        <img src="https://simplesharebuttons.com/images/somacro/buffer.png" alt="Buffer" />
+                    </a>
+
+                    <!-- Digg -->
+                    <a href="http://www.digg.com/submit?url=https://simplesharebuttons.com" target="_blank">
+                        <img src="https://simplesharebuttons.com/images/somacro/diggit.png" alt="Digg" />
+                    </a>
+
+                    <!-- Email -->
+                    <a href="mailto:?Subject=Simple Share Buttons&amp;Body=I%20saw%20this%20and%20thought%20of%20you!%20 https://simplesharebuttons.com">
+                        <img src="https://simplesharebuttons.com/images/somacro/email.png" alt="Email" />
+                    </a>
+
+                    <!-- Facebook -->
+                    <a href="http://www.facebook.com/sharer.php?u=https://simplesharebuttons.com" target="_blank">
+                        <img src="https://simplesharebuttons.com/images/somacro/facebook.png" alt="Facebook" />
+                    </a>
+
+                    <!-- Google+ -->
+                    <a href="https://plus.google.com/share?url=https://simplesharebuttons.com" target="_blank">
+                        <img src="https://simplesharebuttons.com/images/somacro/google.png" alt="Google" />
+                    </a>
+
+                    <!-- LinkedIn -->
+                    <a href="http://www.linkedin.com/shareArticle?mini=true&amp;url=https://simplesharebuttons.com" target="_blank">
+                        <img src="https://simplesharebuttons.com/images/somacro/linkedin.png" alt="LinkedIn" />
+                    </a>
+
+                    <!-- Pinterest -->
+                    <a href="javascript:void((function()%7Bvar%20e=document.createElement('script');e.setAttribute('type','text/javascript');e.setAttribute('charset','UTF-8');e.setAttribute('src','http://assets.pinterest.com/js/pinmarklet.js?r='+Math.random()*99999999);document.body.appendChild(e)%7D)());">
+                        <img src="https://simplesharebuttons.com/images/somacro/pinterest.png" alt="Pinterest" />
+                    </a>
+
+                    <!-- Print -->
+                    <a href="javascript:;" onclick="window.print()">
+                        <img src="https://simplesharebuttons.com/images/somacro/print.png" alt="Print" />
+                    </a>
+
+                    <!-- Reddit -->
+                    <a href="http://reddit.com/submit?url=https://simplesharebuttons.com&amp;title=Simple Share Buttons" target="_blank">
+                        <img src="https://simplesharebuttons.com/images/somacro/reddit.png" alt="Reddit" />
+                    </a>
+
+                    <!-- StumbleUpon-->
+                    <a href="http://www.stumbleupon.com/submit?url=https://simplesharebuttons.com&amp;title=Simple Share Buttons" target="_blank">
+                        <img src="https://simplesharebuttons.com/images/somacro/stumbleupon.png" alt="StumbleUpon" />
+                    </a>
+
+                    <!-- Tumblr-->
+                    <a href="http://www.tumblr.com/share/link?url=https://simplesharebuttons.com&amp;title=Simple Share Buttons" target="_blank">
+                        <img src="https://simplesharebuttons.com/images/somacro/tumblr.png" alt="Tumblr" />
+                    </a>
+
+                    <!-- Twitter -->
+                    <a href="https://twitter.com/share?url=https://simplesharebuttons.com&amp;text=Simple%20Share%20Buttons&amp;hashtags=simplesharebuttons" target="_blank">
+                        <img src="https://simplesharebuttons.com/images/somacro/twitter.png" alt="Twitter" />
+                    </a>
+
+                    <!-- VK -->
+                    <a href="http://vkontakte.ru/share.php?url=https://simplesharebuttons.com" target="_blank">
+                        <img src="https://simplesharebuttons.com/images/somacro/vk.png" alt="VK" />
+                    </a>
+
+                    <!-- Yummly -->
+                    <a href="http://www.yummly.com/urb/verify?url=https://simplesharebuttons.com&amp;title=Simple Share Buttons" target="_blank">
+                        <img src="https://simplesharebuttons.com/images/somacro/yummly.png" alt="Yummly" />
+                    </a>
+
+                </div>
+                <!--------------End----------->
+            </div>
+        </main>
+    </div>
+
+</body>
+
+</html>
