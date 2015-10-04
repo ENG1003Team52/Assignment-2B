@@ -74,6 +74,7 @@
             <nav class="mdl-navigation">
                 <a class="mdl-navigation__link" href="login.html">login, which I haven't written</a>
                 <a class="mdl-navigation__link" href="gpstest.html">gpstest</a>
+                <a class="mdl-navigation__link" href="runHistory.html">run history</a>
             </nav>
         </div>
         <main class="mdl-layout__content">
@@ -122,10 +123,12 @@
                         // Demonstrate the current latitude and longitude:
                         var currentLat = Number(position.coords.latitude);
                         var currentLng = Number(position.coords.longitude);
-                        //Convert the positions to object for the map to recognise
+                        var currentAccuracy = Number(position.coords.accuracy);
+                            //Convert the positions to object for the map to recognise
                         var currentPosi = {
                             lat: currentLat,
                             lng: currentLng,
+                            accuracy: currentAccuracy,
                         }
 
                         //Add new locations to location histroy
@@ -179,17 +182,19 @@
                             }
                             this.markers = [];
                             this.polyline;
+                            this.circle;
                         };
+
                         //When the run button is clicked do the following things
                         runButton.onclick = function () {
                             if (isRunning === false) {
                                 //all a new rundata object,we will save it later for local storage of the whole run
-                                run1 = new RunData()
-                                    //Set start time
+                                run1 = new RunData();
+                                //Set start time
                                 run1.startTime.date = new Date().toDateString();
                                 run1.startTime.time = new Date().toTimeString();
-                                console.log(run1.startTime.date)
-                                console.log(run1.startTime.time)
+                                console.log(run1.startTime.date);
+                                console.log(run1.startTime.time);
 
                                 //set a polyline
                                 run1.polyline = new google.maps.Polyline({
@@ -200,6 +205,15 @@
                                     strokeWeight: 2,
                                     map: map
                                 });
+
+                                //set a circle to show accuracy
+                                run1.circle = new google.maps.Circle({
+                                    map: map,
+                                    fillColor: "#0066FF",
+                                    fillOpacity: "0.1",
+                                    strokeColor: "#0000FF",
+                                });
+
                                 //timerID is used to stop the timer, i.e. stop recoding
                                 timerID = setInterval(function () { //Do things every second
                                         //copy from list of positions to this run
@@ -208,14 +222,16 @@
                                         var point = {
                                             lat: null,
                                             lng: null,
-                                            time: null
+                                            accuracy: null,
                                         }
 
-
+                                        //copy data from background
                                         point.lat = listOfPosi[listOfPosi.length - 1].lat;
-                                        point.lng = listOfPosi[listOfPosi.length - 1].lng
-                                        point.time = new Date().getTime()
+                                        point.lng = listOfPosi[listOfPosi.length - 1].lng;
+                                        point.accuracy = listOfPosi[listOfPosi.length - 1].accuracy;
+                                        point.time = new Date().getTime();
 
+                                        //save points to run1
                                         run1.points.push(point)
                                         console.log(run1.points)
 
@@ -231,6 +247,9 @@
                                         //update polyline
                                         run1.polyline.setPath(run1.points)
 
+                                        //Update the circle
+                                        run1.circle.setCenter(run1.points[run1.points.length - 1]);
+                                        run1.circle.setRadius(run1.points[run1.points.length - 1].accuracy);
                                         //If there are at least 2 points, display speed
                                         if (run1.points.length >= 2) {
                                             dispSpeed();
@@ -257,8 +276,8 @@
                             run1.markers[i].setMap(null); //set the map property of markers to null
                         }
                         run1.polyline.setMap(null);
-                        delete run1.markers;
-                        delete run1.polyline;
+                        run1.markers = [];
+                        run1.polyline = null;
                         document.getElementById("speedDisplay").innerHTML = null;
                         isRunning = false; //make sure when click button again, it creat the run
                         document.getElementById("runButton").innerHTML = ("run!") //change what does the button says.
@@ -313,7 +332,7 @@
 
                             //ask user for run's name for storage
                             run1.name = prompt("What's the name of this run?", storageKey);
-                            if (run1.name = null) {
+                            if (run1.name === null) {
                                 run1.name = storageKey;
                             }
 
