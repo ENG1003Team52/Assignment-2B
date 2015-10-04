@@ -276,8 +276,10 @@
                             run1.markers[i].setMap(null); //set the map property of markers to null
                         }
                         run1.polyline.setMap(null);
+                        run1.circle.setMap(null);
                         run1.markers = [];
                         run1.polyline = null;
+                        run1.circle = null;
                         document.getElementById("speedDisplay").innerHTML = null;
                         isRunning = false; //make sure when click button again, it creat the run
                         document.getElementById("runButton").innerHTML = ("run!") //change what does the button says.
